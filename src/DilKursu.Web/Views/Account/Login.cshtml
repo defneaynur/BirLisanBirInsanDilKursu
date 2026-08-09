@@ -1,0 +1,67 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Giriş";
+}
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <!-- Sol: markalı görsel panel -->
+        <div class="auth-hero">
+            <img src="~/img/hero.svg" alt="Dil eğitimi" />
+            <h2>Bir Lisan Bir İnsan</h2>
+            <p class="mb-0 opacity-75">Dil Kursu Otomasyon Sistemi</p>
+        </div>
+
+        <!-- Sağ: giriş formu -->
+        <div class="auth-form">
+            <img src="~/img/logo.svg" alt="Logo" class="auth-logo" />
+            <h4 class="fw-bold mb-1">Hoş geldiniz 👋</h4>
+            <p class="text-muted mb-4">Devam etmek için giriş yapın.</p>
+
+            <form asp-controller="Account" asp-action="Login" method="post">
+                <input type="hidden" asp-for="ReturnUrl" />
+
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-envelope text-muted"></i></span>
+                        <input asp-for="Email" class="form-control border-start-0" placeholder="ornek@birlisanbirinsan.com" />
+                    </div>
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label"></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-lock text-muted"></i></span>
+                        <input asp-for="Password" class="form-control border-start-0" placeholder="••••••••" />
+                    </div>
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input asp-for="RememberMe" class="form-check-input" />
+                    <label asp-for="RememberMe" class="form-check-label"></label>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2">
+                    <i class="bi bi-box-arrow-in-right me-1"></i>Giriş Yap
+                </button>
+            </form>
+
+            <div class="mt-4 p-3 rounded-3" style="background:#f4f5fb;">
+                <div class="small text-muted">
+                    <div class="fw-semibold mb-1"><i class="bi bi-info-circle me-1"></i>Demo hesaplar</div>
+                    <div>👤 Yönetici: <code>admin@birlisanbirinsan.com</code> / <code>Admin123!</code></div>
+                    <div>📝 Kayıt Elemanı: <code>kayit@birlisanbirinsan.com</code> / <code>Kayit123!</code></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

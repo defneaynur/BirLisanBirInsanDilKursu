@@ -1,0 +1,119 @@
+@{
+    ViewData["Title"] = "Öğrenciler";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="page-title">
+        <span class="title-badge"><i class="bi bi-people"></i></span>
+        <div class="h4 mb-0">Öğrenciler</div>
+    </div>
+    <button class="btn btn-primary" id="btnNew"><i class="bi bi-plus-lg me-1"></i>Yeni Öğrenci</button>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <table id="studentTable" class="table table-striped table-hover w-100">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Ad Soyad</th>
+                    <th>Ev Tel.</th>
+                    <th>Cep Tel.</th>
+                    <th>Kayıt</th>
+                    <th class="text-end">İşlemler</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="studentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="studentForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Yeni Öğrenci</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="Id" name="Id" value="0" />
+                    <div class="mb-3">
+                        <label class="form-label">Ad Soyad *</label>
+                        <input type="text" id="FullName" name="FullName" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ev Telefonu</label>
+                        <input type="text" id="HomePhone" name="HomePhone" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Cep Telefonu</label>
+                        <input type="text" id="MobilePhone" name="MobilePhone" class="form-control" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Öğrenci ekranı: DataTable + modal ile AJAX CRUD.
+        $(function () {
+            const modal = new bootstrap.Modal('#studentModal');
+
+            const table = buildDataTable('#studentTable', [
+                { data: 'id' },
+                { data: 'fullName' },
+                { data: 'homePhone' },
+                { data: 'mobilePhone' },
+                { data: 'enrollmentCount', className: 'text-center' },
+                {
+                    data: 'id', orderable: false, className: 'text-end',
+                    render: id => `<button class="btn btn-sm btn-outline-primary btn-edit" data-id="${id}"><i class="bi bi-pencil"></i></button>
+                                   <button class="btn btn-sm btn-outline-danger btn-del ms-1" data-id="${id}"><i class="bi bi-trash"></i></button>`
+                }
+            ], '@Url.Action("List", "Student")');
+
+            $('#btnNew').on('click', function () {
+                $('#studentForm')[0].reset();
+                $('#Id').val(0);
+                $('#modalTitle').text('Yeni Öğrenci');
+                modal.show();
+            });
+
+            $('#studentTable').on('click', '.btn-edit', function () {
+                getJson('@Url.Action("Get", "Student")?id=' + $(this).data('id')).done(function (res) {
+                    if (!res.success) { showToast(false, res.message); return; }
+                    const d = res.data;
+                    $('#Id').val(d.id);
+                    $('#FullName').val(d.fullName);
+                    $('#HomePhone').val(d.homePhone);
+                    $('#MobilePhone').val(d.mobilePhone);
+                    $('#modalTitle').text('Öğrenci Düzenle');
+                    modal.show();
+                });
+            });
+
+            $('#studentForm').on('submit', function (e) {
+                e.preventDefault();
+                const url = $('#Id').val() === '0' ? '@Url.Action("Create", "Student")' : '@Url.Action("Update", "Student")';
+                postForm(url, $(this).serialize()).done(function (res) {
+                    showToast(res.success, res.message);
+                    if (res.success) { modal.hide(); table.ajax.reload(); }
+                });
+            });
+
+            $('#studentTable').on('click', '.btn-del', async function () {
+                if (!await confirmAction('Bu öğrenci silinecek.')) return;
+                postForm('@Url.Action("Delete", "Student")', { id: $(this).data('id') }).done(function (res) {
+                    showToast(res.success, res.message);
+                    if (res.success) table.ajax.reload();
+                });
+            });
+        });
+    </script>
+}

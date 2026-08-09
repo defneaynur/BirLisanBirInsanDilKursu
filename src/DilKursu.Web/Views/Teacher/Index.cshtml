@@ -1,0 +1,218 @@
+@{
+    ViewData["Title"] = "Öğretmenler";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="page-title">
+        <span class="title-badge"><i class="bi bi-person-video3"></i></span>
+        <div class="h4 mb-0">Öğretmenler</div>
+    </div>
+    <button class="btn btn-primary" id="btnNew"><i class="bi bi-plus-lg me-1"></i>Yeni Öğretmen</button>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <table id="teacherTable" class="table table-striped table-hover w-100">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Ad Soyad</th>
+                    <th>Diller</th>
+                    <th>Şubeler</th>
+                    <th>Cep Tel.</th>
+                    <th class="text-end">İşlemler</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="teacherModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="teacherForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Yeni Öğretmen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="Id" value="0" />
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Ad Soyad *</label>
+                            <input type="text" id="FullName" class="form-control" required />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Ev Tel.</label>
+                            <input type="text" id="HomePhone" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Cep Tel.</label>
+                            <input type="text" id="MobilePhone" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">İşe Başlama *</label>
+                            <input type="date" id="StartDate" class="form-control" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Öğretebildiği Diller *</label>
+                            <select id="LanguageIds" class="form-select" multiple size="4"></select>
+                            <small class="text-muted">Ctrl ile çoklu seçim</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Ders Verebildiği Şubeler *</label>
+                            <select id="BranchIds" class="form-select" multiple size="4"></select>
+                            <small class="text-muted">Ctrl ile çoklu seçim</small>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <label class="form-label mb-0">Çalışabileceği Gün / Saatler</label>
+                                <button type="button" class="btn btn-sm btn-outline-success" id="btnAddAvail">
+                                    <i class="bi bi-plus"></i> Satır Ekle
+                                </button>
+                            </div>
+                            <table class="table table-sm mt-2" id="availTable">
+                                <thead>
+                                    <tr><th>Gün</th><th>Başlangıç</th><th>Bitiş</th><th></th></tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Öğretmen ekranı: çoklu dil/şube seçimi ve dinamik müsaitlik satırlarıyla JSON POST.
+        $(function () {
+            const modal = new bootstrap.Modal('#teacherModal');
+
+            // .NET DayOfWeek değerleri (Pazar=0 ... Cumartesi=6) ile Türkçe karşılıkları.
+            const days = [
+                { v: 1, t: 'Pazartesi' }, { v: 2, t: 'Salı' }, { v: 3, t: 'Çarşamba' },
+                { v: 4, t: 'Perşembe' }, { v: 5, t: 'Cuma' }, { v: 6, t: 'Cumartesi' }, { v: 0, t: 'Pazar' }
+            ];
+
+            // Bir müsaitlik satırı (HTML) üretir.
+            function availRow(day = 1, start = '09:00', end = '12:00') {
+                const opts = days.map(d => `<option value="${d.v}" ${d.v === day ? 'selected' : ''}>${d.t}</option>`).join('');
+                return `<tr>
+                    <td><select class="form-select form-select-sm av-day">${opts}</select></td>
+                    <td><input type="time" class="form-control form-control-sm av-start" value="${start}"></td>
+                    <td><input type="time" class="form-control form-control-sm av-end" value="${end}"></td>
+                    <td><button type="button" class="btn btn-sm btn-outline-danger av-del"><i class="bi bi-x"></i></button></td>
+                </tr>`;
+            }
+
+            // Dil ve şube seçeneklerini yükler.
+            function loadOptions() {
+                const p1 = getJson('@Url.Action("LanguageOptions", "Teacher")').done(list =>
+                    $('#LanguageIds').html(list.map(x => `<option value="${x.id}">${x.name}</option>`).join('')));
+                const p2 = getJson('@Url.Action("BranchOptions", "Teacher")').done(list =>
+                    $('#BranchIds').html(list.map(x => `<option value="${x.id}">${x.name}</option>`).join('')));
+                return $.when(p1, p2);
+            }
+
+            const table = buildDataTable('#teacherTable', [
+                { data: 'id' },
+                { data: 'fullName' },
+                { data: 'languages', render: arr => (arr || []).join(', ') },
+                { data: 'branches', render: arr => (arr || []).join(', ') },
+                { data: 'mobilePhone' },
+                {
+                    data: 'id', orderable: false, className: 'text-end',
+                    render: id => `<button class="btn btn-sm btn-outline-primary btn-edit" data-id="${id}"><i class="bi bi-pencil"></i></button>
+                                   <button class="btn btn-sm btn-outline-danger btn-del ms-1" data-id="${id}"><i class="bi bi-trash"></i></button>`
+                }
+            ], '@Url.Action("List", "Teacher")');
+
+            // Formu boş bir öğretmen için hazırlar.
+            function resetForm() {
+                $('#teacherForm')[0].reset();
+                $('#Id').val(0);
+                $('#LanguageIds').val([]);
+                $('#BranchIds').val([]);
+                $('#availTable tbody').html(availRow());
+                $('#StartDate').val(new Date().toISOString().slice(0, 10));
+            }
+
+            $('#btnNew').on('click', async function () {
+                await loadOptions();
+                resetForm();
+                $('#modalTitle').text('Yeni Öğretmen');
+                modal.show();
+            });
+
+            $('#btnAddAvail').on('click', () => $('#availTable tbody').append(availRow()));
+            $('#availTable').on('click', '.av-del', function () { $(this).closest('tr').remove(); });
+
+            $('#teacherTable').on('click', '.btn-edit', async function () {
+                await loadOptions();
+                getJson('@Url.Action("Get", "Teacher")?id=' + $(this).data('id')).done(function (res) {
+                    if (!res.success) { showToast(false, res.message); return; }
+                    const d = res.data;
+                    $('#Id').val(d.id);
+                    $('#FullName').val(d.fullName);
+                    $('#HomePhone').val(d.homePhone);
+                    $('#MobilePhone').val(d.mobilePhone);
+                    $('#StartDate').val(d.startDate.slice(0, 10));
+                    $('#LanguageIds').val(d.languageIds.map(String));
+                    $('#BranchIds').val(d.branchIds.map(String));
+                    // Müsaitlik satırlarını yeniden oluştur.
+                    const rows = (d.availabilities || []).map(a => availRow(a.day, a.startTime.slice(0, 5), a.endTime.slice(0, 5)));
+                    $('#availTable tbody').html(rows.join('') || availRow());
+                    $('#modalTitle').text('Öğretmen Düzenle');
+                    modal.show();
+                });
+            });
+
+            // Formu, servisin beklediği DTO yapısına dönüştürüp JSON olarak gönderir.
+            $('#teacherForm').on('submit', function (e) {
+                e.preventDefault();
+
+                const availabilities = [];
+                $('#availTable tbody tr').each(function () {
+                    availabilities.push({
+                        day: parseInt($(this).find('.av-day').val()),
+                        startTime: $(this).find('.av-start').val() + ':00',
+                        endTime: $(this).find('.av-end').val() + ':00'
+                    });
+                });
+
+                const dto = {
+                    id: parseInt($('#Id').val()),
+                    fullName: $('#FullName').val(),
+                    homePhone: $('#HomePhone').val(),
+                    mobilePhone: $('#MobilePhone').val(),
+                    startDate: $('#StartDate').val(),
+                    languageIds: ($('#LanguageIds').val() || []).map(Number),
+                    branchIds: ($('#BranchIds').val() || []).map(Number),
+                    availabilities: availabilities
+                };
+
+                const url = dto.id === 0 ? '@Url.Action("Create", "Teacher")' : '@Url.Action("Update", "Teacher")';
+                postJson(url, dto).done(function (res) {
+                    showToast(res.success, res.message);
+                    if (res.success) { modal.hide(); table.ajax.reload(); }
+                });
+            });
+
+            $('#teacherTable').on('click', '.btn-del', async function () {
+                if (!await confirmAction('Bu öğretmen silinecek.')) return;
+                postForm('@Url.Action("Delete", "Teacher")', { id: $(this).data('id') }).done(function (res) {
+                    showToast(res.success, res.message);
+                    if (res.success) table.ajax.reload();
+                });
+            });
+        });
+    </script>
+}

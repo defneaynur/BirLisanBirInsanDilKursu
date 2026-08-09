@@ -1,0 +1,28 @@
+# .NET derleme çıktıları
+bin/
+obj/
+out/
+
+# Visual Studio / Rider kullanıcı dosyaları
+.vs/
+.idea/
+*.user
+*.suo
+
+# Yayınlama çıktıları
+publish/
+*.publishsettings
+
+# Kullanıcı gizli bilgileri (User Secrets)
+secrets.json
+
+# Loglar
+*.log
+
+# İşletim sistemi dosyaları
+Thumbs.db
+.DS_Store
+
+# Claude Code (yerel ayarlar/araçlar — depoya dahil edilmez)
+.claude/
+CLAUDE.md

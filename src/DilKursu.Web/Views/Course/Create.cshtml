@@ -1,0 +1,186 @@
+@{
+    ViewData["Title"] = "Ders Aç";
+}
+
+<div class="page-title mb-4">
+    <span class="title-badge"><i class="bi bi-magic"></i></span>
+    <div class="h4 mb-0">Ders Açma Sihirbazı</div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Adım 1: Kriterler -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-light fw-bold">1. Adım — Kriterleri Belirleyin</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Dil *</label>
+                        <select id="LanguageId" class="form-select"></select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Şube *</label>
+                        <select id="BranchId" class="form-select"></select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Gün *</label>
+                        <select id="Day" class="form-select"></select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Başlangıç *</label>
+                        <input type="time" id="StartTime" class="form-control" value="09:00" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Bitiş *</label>
+                        <input type="time" id="EndTime" class="form-control" value="11:00" />
+                    </div>
+                </div>
+                <button class="btn btn-primary mt-3" id="btnSuggest">
+                    <i class="bi bi-search me-1"></i>Uygun Öğretmen ve Derslikleri Getir
+                </button>
+            </div>
+        </div>
+
+        <!-- Adım 2: Öneriler -->
+        <div class="card shadow-sm mb-3 d-none" id="suggestionCard">
+            <div class="card-header bg-light fw-bold">2. Adım — Uygunları Seçin</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Uygun Öğretmen *</label>
+                        <select id="TeacherId" class="form-select"></select>
+                        <small class="text-muted" id="teacherHint"></small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Boş Derslik *</label>
+                        <select id="ClassroomId" class="form-select"></select>
+                        <small class="text-muted" id="classroomHint"></small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Kur *</label>
+                        <select id="Level" class="form-select">
+                            @foreach (var lvl in Enum.GetValues<KurSeviyesi>())
+                            {
+                                <option value="@((int)lvl)">@lvl</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Kontenjan *</label>
+                        <input type="number" id="Quota" class="form-control" min="1" value="15" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Ücret (₺) *</label>
+                        <input type="number" id="Fee" class="form-control" min="0" step="0.01" value="5000" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Başlangıç Tarihi *</label>
+                        <input type="date" id="StartDate" class="form-control" />
+                    </div>
+                </div>
+                <button class="btn btn-success mt-3" id="btnCreate">
+                    <i class="bi bi-check-lg me-1"></i>Dersi Aç
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="alert alert-info small">
+            <i class="bi bi-info-circle me-1"></i>
+            Sistem; seçtiğiniz dili bilen, o şubede ders verebilen ve seçtiğiniz gün/saatte
+            <strong>müsait ve çakışmayan</strong> öğretmenleri, aynı saatte <strong>boş olan</strong> derslikleri listeler.
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Ders açma sihirbazı: kriterlere göre öneri al, seç ve dersi oluştur.
+        $(function () {
+            const days = [
+                { v: 1, t: 'Pazartesi' }, { v: 2, t: 'Salı' }, { v: 3, t: 'Çarşamba' },
+                { v: 4, t: 'Perşembe' }, { v: 5, t: 'Cuma' }, { v: 6, t: 'Cumartesi' }, { v: 0, t: 'Pazar' }
+            ];
+            $('#Day').html(days.map(d => `<option value="${d.v}">${d.t}</option>`).join(''));
+            $('#StartDate').val(new Date().toISOString().slice(0, 10));
+
+            // Dil ve şube seçeneklerini yükle.
+            getJson('@Url.Action("LanguageOptions", "Course")').done(list =>
+                $('#LanguageId').html(list.map(x => `<option value="${x.id}">${x.name}</option>`).join('')));
+            getJson('@Url.Action("BranchOptions", "Course")').done(list =>
+                $('#BranchId').html(list.map(x => `<option value="${x.id}">${x.name}</option>`).join('')));
+
+            // Kriterleri tek bir nesnede toplar.
+            function criteria() {
+                return {
+                    languageId: parseInt($('#LanguageId').val()),
+                    branchId: parseInt($('#BranchId').val()),
+                    day: parseInt($('#Day').val()),
+                    startTime: $('#StartTime').val() + ':00',
+                    endTime: $('#EndTime').val() + ':00'
+                };
+            }
+
+            // Adım 1: önerileri getir.
+            $('#btnSuggest').on('click', function () {
+                postJson('@Url.Action("Suggest", "Course")', criteria()).done(function (res) {
+                    if (!res.success) { showToast(false, res.message); return; }
+
+                    const t = res.data.availableTeachers;
+                    const c = res.data.availableClassrooms;
+
+                    // Ders açmak için hem uygun öğretmen HEM boş derslik gerekir.
+                    // Biri bile yoksa 2. adım formu gösterilmez; net bir uyarı verilir.
+                    if (t.length === 0 || c.length === 0) {
+                        $('#suggestionCard').addClass('d-none');
+
+                        let msg;
+                        if (t.length === 0 && c.length === 0) {
+                            msg = 'Bu kriterler için uygun öğretmen ve boş derslik yok. Kriterleri değiştirin.';
+                        } else if (t.length === 0) {
+                            msg = 'Bu kriterler için uygun öğretmen yok. Kriterleri değiştirin.';
+                        } else {
+                            msg = 'Bu kriterler için boş derslik yok. Kriterleri değiştirin.';
+                        }
+                        showToast(false, msg);
+                        return;
+                    }
+
+                    // Her ikisi de var → seçenekleri doldur ve formu göster.
+                    $('#TeacherId').html(t.map(x => `<option value="${x.id}">${x.fullName}</option>`).join(''));
+                    $('#ClassroomId').html(c.map(x => `<option value="${x.id}">${x.name} (Kap: ${x.capacity})</option>`).join(''));
+
+                    $('#teacherHint').text(t.length + ' uygun öğretmen');
+                    $('#classroomHint').text(c.length + ' boş derslik');
+
+                    $('#suggestionCard').removeClass('d-none');
+                });
+            });
+
+            // Adım 2: dersi oluştur.
+            $('#btnCreate').on('click', function () {
+                if (!$('#TeacherId').val() || !$('#ClassroomId').val()) {
+                    showToast(false, 'Öğretmen ve derslik seçilmelidir.');
+                    return;
+                }
+
+                const dto = Object.assign(criteria(), {
+                    teacherId: parseInt($('#TeacherId').val()),
+                    classroomId: parseInt($('#ClassroomId').val()),
+                    level: parseInt($('#Level').val()),
+                    quota: parseInt($('#Quota').val()),
+                    fee: parseFloat($('#Fee').val()),
+                    startDate: $('#StartDate').val()
+                });
+
+                postJson('@Url.Action("Create", "Course")', dto).done(function (res) {
+                    showToast(res.success, res.message);
+                    if (res.success) {
+                        setTimeout(() => window.location.href = '@Url.Action("Index", "Course")', 1200);
+                    }
+                });
+            });
+        });
+    </script>
+}

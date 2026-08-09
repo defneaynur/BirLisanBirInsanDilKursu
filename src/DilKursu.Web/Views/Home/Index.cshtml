@@ -1,0 +1,113 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Kontrol Paneli";
+}
+
+<div class="page-title mb-4">
+    <span class="title-badge"><i class="bi bi-speedometer2"></i></span>
+    <div>
+        <div class="h4 mb-0">Kontrol Paneli</div>
+        <div class="text-muted small">Genel bakış ve özet istatistikler</div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card bg-grad-indigo h-100">
+            <div class="card-body">
+                <div class="stat-value">@Model.BranchCount</div>
+                <div class="fw-500 opacity-75">Şube</div>
+                <i class="bi bi-building stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card bg-grad-violet h-100">
+            <div class="card-body">
+                <div class="stat-value">@Model.TeacherCount</div>
+                <div class="fw-500 opacity-75">Öğretmen</div>
+                <i class="bi bi-person-video3 stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card bg-grad-teal h-100">
+            <div class="card-body">
+                <div class="stat-value">@Model.StudentCount</div>
+                <div class="fw-500 opacity-75">Öğrenci</div>
+                <i class="bi bi-people stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card bg-grad-amber h-100">
+            <div class="card-body">
+                <div class="stat-value">@Model.CourseCount</div>
+                <div class="fw-500 opacity-75">Açık Ders</div>
+                <i class="bi bi-journal-bookmark stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-1">
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-3">👋 Hoş geldiniz</h5>
+                <p class="text-muted">
+                    <strong>Bir Lisan Bir İnsan</strong> dil kursu otomasyon sistemine hoş geldiniz.
+                    Bu panel üzerinden tüm şubelerinizi merkezi olarak yönetebilirsiniz.
+                </p>
+                <div class="row g-3 mt-2">
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                            <div><strong>Ders Açma Sihirbazı</strong><br><span class="text-muted small">Uygun öğretmen ve boş derslikleri otomatik önerir.</span></div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                            <div><strong>Taksitli Ödeme</strong><br><span class="text-muted small">Öğrenci taksitlerini takip edin ve tahsil edin.</span></div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                            <div><strong>Çok Şubeli Yönetim</strong><br><span class="text-muted small">Her şubeden tüm şubelerle işlem yapın.</span></div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                            <div><strong>Rol Bazlı Erişim</strong><br><span class="text-muted small">Yönetici ve kayıt elemanı yetkileri ayrıdır.</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-body p-4 d-flex flex-column justify-content-center align-items-center text-center">
+                <img src="~/img/logo.svg" alt="Logo" style="width:88px;height:88px;" class="mb-3" />
+                <h6 class="fw-bold mb-1">Hızlı İşlem</h6>
+                @if (User.IsInRole(AppRoles.Admin))
+                {
+                    <p class="text-muted small mb-3">Yeni bir ders açmaya hazır mısınız?</p>
+                    <a asp-controller="Course" asp-action="Create" class="btn btn-primary">
+                        <i class="bi bi-magic me-1"></i>Ders Aç
+                    </a>
+                }
+                else
+                {
+                    <p class="text-muted small mb-3">Yeni bir öğrenci kaydı oluşturun.</p>
+                    <a asp-controller="Enrollment" asp-action="Index" class="btn btn-primary">
+                        <i class="bi bi-cash-coin me-1"></i>Kayıt & Ödeme
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>

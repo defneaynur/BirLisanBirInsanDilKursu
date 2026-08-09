@@ -1,0 +1,194 @@
+@using System.Security.Claims
+@{
+    // Oturum açan kullanıcının rollerine göre menüyü koşullu göstermek için yardımcı bayraklar.
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var isAdmin = User.IsInRole(AppRoles.Admin);
+    var isKayit = User.IsInRole(AppRoles.Kayit);
+    var fullName = User.FindFirstValue(ClaimTypes.Name);
+    // Kullanıcının giriş yaptığı şube (özel "Branch" claim'i; yoksa merkez).
+    var branchName = User.FindFirstValue("Branch");
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Bir Lisan Bir İnsan</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="~/img/favicon.svg" />
+    <!-- Google Fonts: Poppins (başlık ve gövde) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- Bootstrap (yerel) -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- jQuery DataTables (Bootstrap 5 temalı, CDN) -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" />
+    <!-- SweetAlert2 (CDN) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
+    <!-- Bootstrap Icons (CDN) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">
+                    <img src="~/img/logo.svg" alt="Logo" />
+                    <span>Bir Lisan Bir İnsan</span>
+                </a>
+                @if (isAuthenticated)
+                {
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="mainNav">
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Home" asp-action="Index">
+                                    <i class="bi bi-speedometer2 me-1"></i>Panel
+                                </a>
+                            </li>
+                            @if (isAdmin)
+                            {
+                                @* Tanımlamalar: sistemin temel/ana verileri *@
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-sliders me-1"></i>Tanımlamalar
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" asp-controller="Branch" asp-action="Index"><i class="bi bi-building me-2"></i>Şubeler</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Classroom" asp-action="Index"><i class="bi bi-door-open me-2"></i>Derslikler</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Language" asp-action="Index"><i class="bi bi-translate me-2"></i>Diller</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Teacher" asp-action="Index"><i class="bi bi-person-video3 me-2"></i>Öğretmenler</a></li>
+                                    </ul>
+                                </li>
+
+                                @* Eğitim: ders yönetimi *@
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-journal-bookmark me-1"></i>Dersler
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" asp-controller="Course" asp-action="Index"><i class="bi bi-list-ul me-2"></i>Ders Listesi</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Course" asp-action="Create"><i class="bi bi-magic me-2"></i>Ders Aç (Sihirbaz)</a></li>
+                                    </ul>
+                                </li>
+                            }
+
+                            @if (isKayit && !isAdmin)
+                            {
+                                @* Kayıt elemanı, öğrencilere tanıtabilmek için şubeleri görüntüleyebilir (salt-okunur). *@
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Branch" asp-action="Index">
+                                        <i class="bi bi-building me-1"></i>Şubeler
+                                    </a>
+                                </li>
+                            }
+
+                            @if (isAdmin || isKayit)
+                            {
+                                @* Öğrenci işlemleri: kayıt ve ödeme *@
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-people me-1"></i>Öğrenci İşlemleri
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" asp-controller="Student" asp-action="Index"><i class="bi bi-people me-2"></i>Öğrenciler</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Enrollment" asp-action="Index"><i class="bi bi-cash-coin me-2"></i>Kayıt & Ödeme</a></li>
+                                    </ul>
+                                </li>
+                            }
+
+                            @if (isAdmin)
+                            {
+                                @* Yönetim: kullanıcılar ve raporlar *@
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-gear me-1"></i>Yönetim
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" asp-controller="User" asp-action="Index"><i class="bi bi-person-badge me-2"></i>Kullanıcılar</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Report" asp-action="Index"><i class="bi bi-bar-chart-line me-2"></i>Raporlar</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AuditLog" asp-action="Index"><i class="bi bi-clipboard-data me-2"></i>İşlem Logları</a></li>
+                                        <li><a class="dropdown-item" asp-controller="ErrorLog" asp-action="Index"><i class="bi bi-bug me-2"></i>Hata Logları</a></li>
+                                    </ul>
+                                </li>
+                            }
+                        </ul>
+                        <ul class="navbar-nav align-items-lg-center">
+                            @if (!string.IsNullOrEmpty(branchName))
+                            {
+                                <li class="nav-item me-lg-2">
+                                    <span class="badge rounded-pill bg-light text-primary py-2 px-3" title="Giriş yapılan şube">
+                                        <i class="bi bi-geo-alt-fill me-1"></i>@branchName
+                                    </span>
+                                </li>
+                            }
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-person-circle me-1"></i>@fullName
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post" class="px-2">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                                <i class="bi bi-box-arrow-right me-1"></i>Çıkış Yap
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                }
+            </div>
+        </nav>
+    </header>
+
+    <div class="container-fluid my-4">
+        <main role="main" class="pb-3">
+            @* Sunucu tarafı geçici mesajlar (varsa) SweetAlert2 ile gösterilir. *@
+            @if (TempData["Success"] != null)
+            {
+                <div id="serverToast" data-icon="success" data-message="@TempData["Success"]"></div>
+            }
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- Markalı alt bilgi (footer) -->
+    <footer class="app-footer">
+        <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <img src="~/img/logo.svg" alt="Logo" width="24" height="24" />
+                <span class="fw-semibold">Bir Lisan Bir İnsan</span>
+                <span class="text-muted">— Dil Kursu Otomasyon Sistemi</span>
+            </div>
+            <div class="text-muted small">
+                © @DateTime.Now.Year Bir Lisan Bir İnsan. Tüm hakları saklıdır.
+            </div>
+        </div>
+    </footer>
+
+    @* CSRF token'ının AJAX isteklerinde header ile gönderilebilmesi için gizli alan. *@
+    @Html.AntiForgeryToken()
+
+    <!-- jQuery (yerel) -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <!-- Bootstrap bundle (yerel) -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery DataTables (CDN) -->
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+    <!-- SweetAlert2 (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Uygulama ortak betikleri -->
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

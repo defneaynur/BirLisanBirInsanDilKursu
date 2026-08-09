@@ -1,0 +1,296 @@
+/* =============================================================================
+   Bir Lisan Bir İnsan — Uygulama teması
+   Modern, temiz ve tutarlı bir görünüm için renk paleti, tipografi ve bileşen
+   stilleri tek dosyada toplanmıştır.
+   ============================================================================= */
+
+:root {
+    --brand-1: #6366f1;   /* indigo */
+    --brand-2: #8b5cf6;   /* menekşe */
+    --brand-accent: #f59e0b; /* kehribar */
+    --brand-grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    --ink: #1e293b;
+    --muted: #64748b;
+    --bg: #f4f5fb;
+    --card-shadow: 0 4px 20px rgba(99, 102, 241, 0.08);
+    --card-shadow-hover: 0 10px 30px rgba(99, 102, 241, 0.16);
+}
+
+html {
+    font-size: 15px;
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    font-family: 'Poppins', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: var(--ink);
+    background-color: var(--bg);
+    /* İnce, tekrarsız arka plan dokusu */
+    background-image:
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.06) 0, transparent 40%),
+        radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.06) 0, transparent 40%);
+    background-attachment: fixed;
+    /* Footer'ı kısa sayfalarda dahi en alta yaslamak için dikey flex düzeni */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+body > .container-fluid {
+    flex: 1 0 auto; /* İçerik alanı büyüyerek footer'ı aşağı iter */
+}
+
+/* ---------- Footer ---------- */
+.app-footer {
+    flex-shrink: 0;
+    background: #ffffff;
+    border-top: 1px solid #e9ecf5;
+    padding: 1rem 1.25rem;
+    font-size: .875rem;
+}
+
+/* ---------- Navbar ---------- */
+.navbar.bg-primary {
+    background: var(--brand-grad) !important;
+    box-shadow: 0 2px 16px rgba(99, 102, 241, 0.25);
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    letter-spacing: .2px;
+}
+
+.navbar-brand img {
+    height: 38px;
+    width: 38px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .15));
+}
+
+.navbar .nav-link {
+    font-weight: 500;
+    border-radius: 8px;
+    padding-inline: .8rem !important;
+    transition: background-color .15s ease;
+}
+
+.navbar .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ---------- Kartlar ---------- */
+.card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: var(--card-shadow);
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.card.shadow-sm {
+    box-shadow: var(--card-shadow) !important;
+}
+
+.card-header {
+    border-radius: 16px 16px 0 0 !important;
+    border: none;
+    font-weight: 600;
+}
+
+/* ---------- İstatistik kartları (dashboard) ---------- */
+.stat-card {
+    border-radius: 18px;
+    color: #fff;
+    overflow: hidden;
+    position: relative;
+    border: none;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--card-shadow-hover);
+}
+
+.stat-card .stat-icon {
+    position: absolute;
+    right: -10px;
+    bottom: -14px;
+    font-size: 5.5rem;
+    opacity: .18;
+}
+
+.stat-card .stat-value {
+    font-size: 2.4rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.bg-grad-indigo { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+.bg-grad-violet { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.bg-grad-teal   { background: linear-gradient(135deg, #14b8a6, #0d9488); }
+.bg-grad-amber  { background: linear-gradient(135deg, #f59e0b, #d97706); }
+
+/* ---------- Butonlar ---------- */
+.btn-primary {
+    background: var(--brand-grad);
+    border: none;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background: linear-gradient(135deg, #5457e5, #7c47e0);
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.4);
+}
+
+.btn {
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.btn-sm {
+    border-radius: 8px;
+}
+
+/* ---------- Formlar ---------- */
+.form-control,
+.form-select {
+    border-radius: 10px;
+    border-color: #e2e8f0;
+    padding: .55rem .85rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--brand-1);
+    box-shadow: 0 0 0 .2rem rgba(99, 102, 241, 0.15);
+}
+
+.form-label {
+    font-weight: 500;
+    color: #475569;
+    font-size: .9rem;
+}
+
+/* ---------- Tablolar ---------- */
+table.dataTable thead th {
+    font-weight: 600;
+    color: #475569;
+    border-bottom: 2px solid #e2e8f0 !important;
+}
+
+.table > tbody > tr:hover > * {
+    background-color: rgba(99, 102, 241, 0.04);
+}
+
+.page-title {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.page-title .title-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: var(--brand-grad);
+    color: #fff;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* ---------- Modal ---------- */
+.modal-content {
+    border: none;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.modal-header {
+    background: var(--brand-grad);
+    color: #fff;
+}
+
+.modal-header .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* ---------- Giriş (login) ekranı ---------- */
+.auth-wrapper {
+    min-height: calc(100vh - 40px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    max-width: 900px;
+    width: 100%;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(79, 70, 229, 0.25);
+    background: #fff;
+}
+
+.auth-hero {
+    background: var(--brand-grad);
+    color: #fff;
+    padding: 3rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.auth-hero img {
+    width: 100%;
+    max-width: 300px;
+    margin-bottom: 1.5rem;
+}
+
+.auth-hero h2 {
+    font-weight: 700;
+    margin-bottom: .5rem;
+}
+
+.auth-form {
+    padding: 3rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.auth-logo {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 767px) {
+    .auth-card {
+        grid-template-columns: 1fr;
+        max-width: 440px;
+    }
+    .auth-hero {
+        display: none; /* Mobilde yalnızca form gösterilir */
+    }
+}
+
+/* ---------- Rozet renkleri ---------- */
+.badge.bg-secondary {
+    background-color: #94a3b8 !important;
+}
+
+/* SweetAlert2 köşe yuvarlaklığı temayla uyumlu */
+.swal2-popup {
+    border-radius: 16px;
+}

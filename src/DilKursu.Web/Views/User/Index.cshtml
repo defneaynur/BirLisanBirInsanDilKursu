@@ -1,0 +1,155 @@
+@{
+    ViewData["Title"] = "Kullanıcılar";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="page-title">
+        <span class="title-badge"><i class="bi bi-person-badge"></i></span>
+        <div>
+            <div class="h4 mb-0">Kullanıcılar</div>
+            <div class="text-muted small">Personel (yönetici / kayıt elemanı) ve şube atamaları</div>
+        </div>
+    </div>
+    <button class="btn btn-primary" id="btnNew"><i class="bi bi-plus-lg me-1"></i>Yeni Kullanıcı</button>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <table id="userTable" class="table table-striped table-hover w-100">
+            <thead>
+                <tr>
+                    <th>Ad Soyad</th>
+                    <th>E-posta</th>
+                    <th>Rol</th>
+                    <th>Şube</th>
+                    <th class="text-end">İşlemler</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="userModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="userForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Yeni Kullanıcı</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="Id" name="Id" />
+                    <div class="mb-3">
+                        <label class="form-label">Ad Soyad *</label>
+                        <input type="text" id="FullName" name="FullName" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">E-posta *</label>
+                        <input type="email" id="Email" name="Email" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Parola <span id="pwHint" class="text-muted small"></span></label>
+                        <input type="password" id="Password" name="Password" class="form-control" autocomplete="new-password" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rol *</label>
+                        <select id="Role" name="Role" class="form-select">
+                            <option value="Kayit">Kayıt Elemanı</option>
+                            <option value="Admin">Yönetici</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="branchWrap">
+                        <label class="form-label">Şube *</label>
+                        <select id="BranchId" name="BranchId" class="form-select"></select>
+                        <small class="text-muted">Kayıt elemanı bu şubeden giriş yapar (işlemleri tüm şubelerde geçerlidir).</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Kullanıcı yönetimi: DataTable + modal ile AJAX CRUD; rol seçimine göre şube alanı gösterilir.
+        $(function () {
+            const modal = new bootstrap.Modal('#userModal');
+            const roleLabels = { 'Admin': 'Yönetici', 'Kayit': 'Kayıt Elemanı' };
+
+            function loadBranches() {
+                return getJson('@Url.Action("BranchOptions", "User")').done(function (list) {
+                    $('#BranchId').html(list.map(b => `<option value="${b.id}">${b.name}</option>`).join(''));
+                });
+            }
+
+            // Rol "Yönetici" ise şube alanı gizlenir (yönetici merkezidir).
+            function toggleBranch() {
+                const isAdmin = $('#Role').val() === 'Admin';
+                $('#branchWrap').toggleClass('d-none', isAdmin);
+            }
+            $('#Role').on('change', toggleBranch);
+
+            const table = buildDataTable('#userTable', [
+                { data: 'fullName' },
+                { data: 'email' },
+                { data: 'role', render: r => roleLabels[r] || r },
+                { data: 'branchName' },
+                {
+                    data: 'id', orderable: false, className: 'text-end',
+                    render: id => `<button class="btn btn-sm btn-outline-primary btn-edit" data-id="${id}"><i class="bi bi-pencil"></i></button>
+                                   <button class="btn btn-sm btn-outline-danger btn-del ms-1" data-id="${id}"><i class="bi bi-trash"></i></button>`
+                }
+            ], '@Url.Action("List", "User")');
+
+            $('#btnNew').on('click', async function () {
+                await loadBranches();
+                $('#userForm')[0].reset();
+                $('#Id').val('');
+                $('#Password').attr('required', true);
+                $('#pwHint').text('(zorunlu)');
+                $('#modalTitle').text('Yeni Kullanıcı');
+                toggleBranch();
+                modal.show();
+            });
+
+            $('#userTable').on('click', '.btn-edit', async function () {
+                await loadBranches();
+                getJson('@Url.Action("Get", "User")?id=' + $(this).data('id')).done(function (res) {
+                    if (!res.success) { showToast(false, res.message); return; }
+                    const d = res.data;
+                    $('#Id').val(d.id);
+                    $('#FullName').val(d.fullName);
+                    $('#Email').val(d.email);
+                    $('#Role').val(d.role);
+                    $('#BranchId').val(d.branchId || '');
+                    $('#Password').val('').attr('required', false);
+                    $('#pwHint').text('(değiştirmek istemiyorsanız boş bırakın)');
+                    $('#modalTitle').text('Kullanıcı Düzenle');
+                    toggleBranch();
+                    modal.show();
+                });
+            });
+
+            $('#userForm').on('submit', function (e) {
+                e.preventDefault();
+                const url = $('#Id').val() ? '@Url.Action("Update", "User")' : '@Url.Action("Create", "User")';
+                postForm(url, $(this).serialize()).done(function (res) {
+                    showToast(res.success, res.message);
+                    if (res.success) { modal.hide(); table.ajax.reload(); }
+                });
+            });
+
+            $('#userTable').on('click', '.btn-del', async function () {
+                if (!await confirmAction('Bu kullanıcı silinecek.')) return;
+                postForm('@Url.Action("Delete", "User")', { id: $(this).data('id') }).done(function (res) {
+                    showToast(res.success, res.message);
+                    if (res.success) table.ajax.reload();
+                });
+            });
+        });
+    </script>
+}

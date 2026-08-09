@@ -1,0 +1,212 @@
+@{
+    ViewData["Title"] = "Şubeler";
+    // Yönetici tam yönetim (ekle/düzenle/sil) görür; kayıt elemanı yalnızca görüntüler (Detay).
+    var isAdmin = User.IsInRole(AppRoles.Admin);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="page-title">
+        <span class="title-badge"><i class="bi bi-building"></i></span>
+        <div>
+            <div class="h4 mb-0">Şubeler</div>
+            @if (!isAdmin)
+            {
+                <div class="text-muted small">Öğrencilere tanıtım için şube bilgileri (salt-okunur)</div>
+            }
+        </div>
+    </div>
+    @if (isAdmin)
+    {
+        <button class="btn btn-primary" id="btnNew">
+            <i class="bi bi-plus-lg me-1"></i>Yeni Şube
+        </button>
+    }
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <table id="branchTable" class="table table-striped table-hover w-100">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Ad</th>
+                    <th>Adres</th>
+                    <th>Derslik</th>
+                    <th class="text-end">İşlemler</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<!-- Şube tanıtım (detay) modalı — salt-okunur, kayıt elemanının öğrenciye tanıtımı için -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-building me-2"></i><span id="dName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div class="fw-semibold text-primary"><i class="bi bi-geo-alt me-1"></i>Adres</div>
+                    <div id="dAddress" class="text-muted"></div>
+                </div>
+                <div class="mb-3">
+                    <div class="fw-semibold text-primary"><i class="bi bi-bus-front me-1"></i>Toplu Taşıma ile Ulaşım</div>
+                    <div id="dPublic" class="text-muted"></div>
+                </div>
+                <div class="mb-3">
+                    <div class="fw-semibold text-primary"><i class="bi bi-car-front me-1"></i>Özel Otomobil ile Ulaşım</div>
+                    <div id="dCar" class="text-muted"></div>
+                </div>
+                <div class="mb-0">
+                    <div class="fw-semibold text-primary"><i class="bi bi-cup-hot me-1"></i>Sosyal Olanaklar</div>
+                    <div id="dSocial" class="text-muted"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (isAdmin)
+{
+    <!-- Şube oluşturma/güncelleme modalı (yalnızca yönetici) -->
+    <div class="modal fade" id="branchModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form id="branchForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitle">Yeni Şube</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="Id" name="Id" value="0" />
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Şube Adı *</label>
+                                <input type="text" id="Name" name="Name" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Adres *</label>
+                                <input type="text" id="Address" name="Address" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Toplu Taşıma Talimatları</label>
+                                <textarea id="PublicTransportInstructions" name="PublicTransportInstructions" class="form-control" rows="2"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Özel Otomobil Talimatları</label>
+                                <textarea id="CarTransportInstructions" name="CarTransportInstructions" class="form-control" rows="2"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Sosyal Olanaklar</label>
+                                <textarea id="SocialFacilities" name="SocialFacilities" class="form-control" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                        <button type="submit" class="btn btn-primary">Kaydet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Şube ekranı: kayıt elemanı için salt-okunur tanıtım; yönetici için tam CRUD.
+        $(function () {
+            // Sunucudan gelen rol bilgisi (buton ve modalları koşullu göstermek için).
+            const isAdmin = @(isAdmin ? "true" : "false");
+
+            const detailModal = new bootstrap.Modal('#detailModal');
+
+            // Boş metinler için tire göster.
+            const orDash = v => (v && v.trim()) ? v : '-';
+
+            // Satır işlem butonları role göre üretilir.
+            function actionButtons(id) {
+                let html = `<button class="btn btn-sm btn-outline-secondary btn-detail" data-id="${id}" title="Tanıtım / Detay"><i class="bi bi-eye"></i></button>`;
+                if (isAdmin) {
+                    html += ` <button class="btn btn-sm btn-outline-primary btn-edit ms-1" data-id="${id}"><i class="bi bi-pencil"></i></button>
+                              <button class="btn btn-sm btn-outline-danger btn-del ms-1" data-id="${id}"><i class="bi bi-trash"></i></button>`;
+                }
+                return html;
+            }
+
+            const table = buildDataTable('#branchTable', [
+                { data: 'id' },
+                { data: 'name' },
+                { data: 'address' },
+                { data: 'classroomCount', className: 'text-center' },
+                { data: 'id', orderable: false, className: 'text-end', render: actionButtons }
+            ], '@Url.Action("List", "Branch")');
+
+            // "Detay": şube bilgilerini salt-okunur modalda göster (tanıtım için).
+            $('#branchTable').on('click', '.btn-detail', function () {
+                getJson('@Url.Action("Get", "Branch")?id=' + $(this).data('id')).done(function (res) {
+                    if (!res.success) { showToast(false, res.message); return; }
+                    const d = res.data;
+                    $('#dName').text(d.name);
+                    $('#dAddress').text(orDash(d.address));
+                    $('#dPublic').text(orDash(d.publicTransportInstructions));
+                    $('#dCar').text(orDash(d.carTransportInstructions));
+                    $('#dSocial').text(orDash(d.socialFacilities));
+                    detailModal.show();
+                });
+            });
+
+            // Aşağıdaki yönetim işlemleri yalnızca yönetici içindir.
+            if (!isAdmin) return;
+
+            const modal = new bootstrap.Modal('#branchModal');
+
+            $('#btnNew').on('click', function () {
+                $('#branchForm')[0].reset();
+                $('#Id').val(0);
+                $('#modalTitle').text('Yeni Şube');
+                modal.show();
+            });
+
+            $('#branchTable').on('click', '.btn-edit', function () {
+                getJson('@Url.Action("Get", "Branch")?id=' + $(this).data('id')).done(function (res) {
+                    if (!res.success) { showToast(false, res.message); return; }
+                    const d = res.data;
+                    $('#Id').val(d.id);
+                    $('#Name').val(d.name);
+                    $('#Address').val(d.address);
+                    $('#PublicTransportInstructions').val(d.publicTransportInstructions);
+                    $('#CarTransportInstructions').val(d.carTransportInstructions);
+                    $('#SocialFacilities').val(d.socialFacilities);
+                    $('#modalTitle').text('Şube Düzenle');
+                    modal.show();
+                });
+            });
+
+            $('#branchForm').on('submit', function (e) {
+                e.preventDefault();
+                const isNew = $('#Id').val() === '0';
+                const url = isNew ? '@Url.Action("Create", "Branch")' : '@Url.Action("Update", "Branch")';
+                postForm(url, $(this).serialize()).done(function (res) {
+                    showToast(res.success, res.message);
+                    if (res.success) { modal.hide(); table.ajax.reload(); }
+                });
+            });
+
+            $('#branchTable').on('click', '.btn-del', async function () {
+                const id = $(this).data('id');
+                if (!await confirmAction('Bu şube silinecek.')) return;
+                postForm('@Url.Action("Delete", "Branch")', { id: id }).done(function (res) {
+                    showToast(res.success, res.message);
+                    if (res.success) table.ajax.reload();
+                });
+            });
+        });
+    </script>
+}

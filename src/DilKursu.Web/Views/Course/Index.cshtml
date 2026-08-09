@@ -1,0 +1,71 @@
+@{
+    ViewData["Title"] = "Dersler";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="page-title">
+        <span class="title-badge"><i class="bi bi-journal-bookmark"></i></span>
+        <div class="h4 mb-0">Dersler</div>
+    </div>
+    <a class="btn btn-primary" asp-controller="Course" asp-action="Create">
+        <i class="bi bi-magic me-1"></i>Ders Aç (Sihirbaz)
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <table id="courseTable" class="table table-striped table-hover w-100">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Dil</th>
+                    <th>Kur</th>
+                    <th>Şube</th>
+                    <th>Öğretmen</th>
+                    <th>Derslik</th>
+                    <th>Gün / Saat</th>
+                    <th>Ücret</th>
+                    <th>Kontenjan</th>
+                    <th class="text-end">İşlem</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Ders listesi: DataTable + silme işlemi.
+        $(function () {
+            // .NET DayOfWeek sayısını Türkçe güne çevirir.
+            const dayNames = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+
+            // "hh:mm:ss" biçimindeki saati "hh:mm" olarak kısaltır.
+            const shortTime = t => (t || '').slice(0, 5);
+
+            const table = buildDataTable('#courseTable', [
+                { data: 'id' },
+                { data: 'languageName' },
+                { data: 'level' },
+                { data: 'branchName' },
+                { data: 'teacherName' },
+                { data: 'classroomName' },
+                { data: null, render: r => `${dayNames[r.day]} ${shortTime(r.startTime)}-${shortTime(r.endTime)}` },
+                { data: 'fee', render: v => Number(v).toFixed(2) + ' ₺', className: 'text-end' },
+                { data: null, render: r => `${r.enrolledCount}/${r.quota}`, className: 'text-center' },
+                {
+                    data: 'id', orderable: false, className: 'text-end',
+                    render: id => `<button class="btn btn-sm btn-outline-danger btn-del" data-id="${id}"><i class="bi bi-trash"></i></button>`
+                }
+            ], '@Url.Action("List", "Course")');
+
+            $('#courseTable').on('click', '.btn-del', async function () {
+                if (!await confirmAction('Bu ders silinecek.')) return;
+                postForm('@Url.Action("Delete", "Course")', { id: $(this).data('id') }).done(function (res) {
+                    showToast(res.success, res.message);
+                    if (res.success) table.ajax.reload();
+                });
+            });
+        });
+    </script>
+}

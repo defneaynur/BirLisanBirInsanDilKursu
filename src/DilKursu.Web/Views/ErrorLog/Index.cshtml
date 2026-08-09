@@ -1,0 +1,105 @@
+@{
+    ViewData["Title"] = "Hata Logları";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="page-title">
+        <span class="title-badge"><i class="bi bi-bug"></i></span>
+        <div>
+            <div class="h4 mb-0">Hata Logları</div>
+            <div class="text-muted small">Sistemde oluşan beklenmeyen hataların (exception) teknik kayıtları</div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <table id="errorTable" class="table table-striped table-hover w-100">
+            <thead>
+                <tr>
+                    <th>Tarih</th>
+                    <th>Kullanıcı</th>
+                    <th>Modül</th>
+                    <th>Tip</th>
+                    <th>Mesaj</th>
+                    <th>Kaynak</th>
+                    <th>IP</th>
+                    <th></th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<!-- Yığın izi (stack trace) detay penceresi -->
+<div class="modal fade" id="stackModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-bug me-2"></i>Hata Detayı</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <div id="stackMeta" class="mb-2 small text-muted"></div>
+                <pre id="stackBody" class="bg-dark text-light p-3 rounded" style="white-space: pre-wrap; word-break: break-word;"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Hata logları ekranı: DataTable + yığın izini gösteren detay penceresi.
+        $(function () {
+            // ISO tarihi "gg.aa.yyyy ss:dd" biçimine çevirir.
+            function fmtDate(iso) {
+                const d = new Date(iso);
+                const p = n => n.toString().padStart(2, '0');
+                return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+            }
+
+            // HTML kaçışı (metni güvenle göstermek için).
+            function esc(s) {
+                return $('<div>').text(s ?? '').html();
+            }
+
+            const table = $('#errorTable').DataTable({
+                ajax: { url: '@Url.Action("List", "ErrorLog")', dataSrc: '' },
+                language: dataTableLanguage(),
+                order: [[0, 'desc']],
+                responsive: true,
+                autoWidth: false,
+                columns: [
+                    { data: 'timestamp', render: (v, type) => type === 'display' ? fmtDate(v) : v },
+                    { data: 'userName', render: v => esc(v) || '-' },
+                    { data: 'module', render: v => `<span class="badge bg-secondary">${esc(v)}</span>` },
+                    { data: 'exceptionType', render: v => `<span class="badge bg-danger">${esc(v)}</span>` },
+                    { data: 'message', render: v => v ? esc(v) : '-' },
+                    {
+                        data: null,
+                        render: r => r.path ? `<code>${esc(r.httpMethod)} ${esc(r.path)}</code>` : '-'
+                    },
+                    { data: 'ipAddress', render: v => esc(v) || '-' },
+                    {
+                        data: null,
+                        orderable: false,
+                        className: 'text-center',
+                        render: () => `<button class="btn btn-sm btn-outline-secondary detail-btn"><i class="bi bi-search"></i></button>`
+                    }
+                ]
+            });
+
+            // "Detay" düğmesi: ilgili satırın yığın izini pencerede gösterir.
+            $('#errorTable tbody').on('click', '.detail-btn', function () {
+                const row = table.row($(this).closest('tr')).data();
+                $('#stackMeta').html(
+                    `<strong>${esc(row.exceptionType)}</strong> — ${esc(row.module)} · ` +
+                    `${esc(row.httpMethod || '')} ${esc(row.path || '')}<br/>` +
+                    `${fmtDate(row.timestamp)} · ${esc(row.userName || '-')} · ${esc(row.ipAddress || '-')}`
+                );
+                $('#stackBody').text(row.stackTrace || row.message || '(detay yok)');
+                new bootstrap.Modal(document.getElementById('stackModal')).show();
+            });
+        });
+    </script>
+}

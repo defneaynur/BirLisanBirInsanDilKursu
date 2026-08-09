@@ -1,0 +1,50 @@
+<svg viewBox="0 0 480 480" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dil eğitimi illüstrasyonu">
+  <defs>
+    <linearGradient id="hg1" x1="0" y1="0" x2="480" y2="480" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.05"/>
+    </linearGradient>
+    <linearGradient id="hg2" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#FBBF24"/>
+      <stop offset="1" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Dünya küresi -->
+  <circle cx="240" cy="240" r="150" fill="url(#hg1)" stroke="#ffffff" stroke-opacity="0.4" stroke-width="2"/>
+  <ellipse cx="240" cy="240" rx="150" ry="60" stroke="#ffffff" stroke-opacity="0.35" stroke-width="2"/>
+  <ellipse cx="240" cy="240" rx="60" ry="150" stroke="#ffffff" stroke-opacity="0.35" stroke-width="2"/>
+  <line x1="90" y1="240" x2="390" y2="240" stroke="#ffffff" stroke-opacity="0.35" stroke-width="2"/>
+  <line x1="240" y1="90" x2="240" y2="390" stroke="#ffffff" stroke-opacity="0.35" stroke-width="2"/>
+
+  <!-- Konuşma balonları (farklı diller) -->
+  <g>
+    <rect x="70" y="90" width="110" height="74" rx="18" fill="#ffffff"/>
+    <path d="M96 164l-8 26 30-22z" fill="#ffffff"/>
+    <text x="125" y="138" font-family="Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" fill="#6366F1" text-anchor="middle">Hi</text>
+  </g>
+
+  <g>
+    <rect x="300" y="120" width="110" height="74" rx="18" fill="url(#hg2)"/>
+    <path d="M384 194l8 26-30-22z" fill="url(#hg2)"/>
+    <text x="355" y="168" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="800" fill="#ffffff" text-anchor="middle">你好</text>
+  </g>
+
+  <g>
+    <rect x="290" y="300" width="120" height="74" rx="18" fill="#ffffff"/>
+    <path d="M316 374l-8 26 30-22z" fill="#ffffff"/>
+    <text x="350" y="348" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="800" fill="#8B5CF6" text-anchor="middle">Merhaba</text>
+  </g>
+
+  <g>
+    <rect x="70" y="300" width="120" height="74" rx="18" fill="#ffffff"/>
+    <path d="M164 374l8 26-30-22z" fill="#ffffff"/>
+    <text x="130" y="348" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="800" fill="#6366F1" text-anchor="middle">Hallo</text>
+  </g>
+
+  <!-- Serpiştirilmiş yıldızlar -->
+  <circle cx="240" cy="60" r="6" fill="#FBBF24"/>
+  <circle cx="430" cy="250" r="5" fill="#ffffff" fill-opacity="0.7"/>
+  <circle cx="50" cy="240" r="5" fill="#ffffff" fill-opacity="0.7"/>
+  <circle cx="240" cy="430" r="6" fill="#FBBF24"/>
+</svg>

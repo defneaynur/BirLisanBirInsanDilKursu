@@ -1,0 +1,161 @@
+@{
+    ViewData["Title"] = "Kayıt & Ödeme";
+}
+
+<div class="page-title mb-4">
+    <span class="title-badge"><i class="bi bi-cash-coin"></i></span>
+    <div class="h4 mb-0">Öğrenci Kaydı ve Ödeme</div>
+</div>
+
+<div class="row g-3">
+    <!-- Sol: yeni kayıt formu -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light fw-bold">Yeni Kayıt</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Öğrenci *</label>
+                    <select id="StudentId" class="form-select"></select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ders *</label>
+                    <select id="CourseId" class="form-select"></select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ödeme Türü *</label>
+                    <select id="PaymentType" class="form-select">
+                        <option value="1">Peşin</option>
+                        <option value="2">Taksitli</option>
+                    </select>
+                </div>
+                <div class="mb-3 d-none" id="installmentCountWrap">
+                    <label class="form-label">Taksit Sayısı *</label>
+                    <input type="number" id="InstallmentCount" class="form-control" min="2" max="24" value="3" />
+                </div>
+                <button class="btn btn-primary w-100" id="btnEnroll">
+                    <i class="bi bi-check-lg me-1"></i>Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sağ: seçilen öğrencinin kayıt ve taksit durumu -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light fw-bold d-flex justify-content-between align-items-center">
+                <span>Öğrenci Ödeme Durumu</span>
+                <select id="ViewStudentId" class="form-select form-select-sm w-auto"></select>
+            </div>
+            <div class="card-body" id="paymentPanel">
+                <p class="text-muted mb-0">Ödeme durumunu görüntülemek için bir öğrenci seçin.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Kayıt & ödeme ekranı: kayıt oluşturma, ödenmemiş taksitleri gösterme ve tahsilat.
+        $(function () {
+            const paymentTypeNames = { 1: 'Peşin', 2: 'Taksitli' };
+
+            // Öğrenci ve ders açılır kutularını doldur (hem kayıt hem görüntüleme için).
+            function loadStudents() {
+                return getJson('@Url.Action("StudentOptions", "Enrollment")').done(function (list) {
+                    const opts = list.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                    $('#StudentId').html(opts);
+                    $('#ViewStudentId').html('<option value="">— Öğrenci seçin —</option>' + opts);
+                });
+            }
+            getJson('@Url.Action("CourseOptions", "Enrollment")').done(function (list) {
+                $('#CourseId').html(list.map(c => `<option value="${c.id}">${c.name}</option>`).join(''));
+            });
+            loadStudents();
+
+            // Ödeme türü "Taksitli" ise taksit sayısı alanını göster.
+            $('#PaymentType').on('change', function () {
+                $('#installmentCountWrap').toggleClass('d-none', $(this).val() !== '2');
+            });
+
+            // Kayıt oluştur.
+            $('#btnEnroll').on('click', function () {
+                const paymentType = parseInt($('#PaymentType').val());
+                const dto = {
+                    studentId: parseInt($('#StudentId').val()),
+                    courseId: parseInt($('#CourseId').val()),
+                    paymentType: paymentType,
+                    installmentCount: paymentType === 2 ? parseInt($('#InstallmentCount').val()) : 1
+                };
+                postForm('@Url.Action("Enroll", "Enrollment")', dto).done(function (res) {
+                    showToast(res.success, res.message);
+                    if (res.success && $('#ViewStudentId').val() == dto.studentId) {
+                        loadPayments(dto.studentId);
+                    }
+                });
+            });
+
+            // Seçilen öğrencinin kayıt ve taksit durumunu yükleyip çizer.
+            function loadPayments(studentId) {
+                if (!studentId) {
+                    $('#paymentPanel').html('<p class="text-muted mb-0">Ödeme durumunu görüntülemek için bir öğrenci seçin.</p>');
+                    return;
+                }
+                getJson('@Url.Action("StudentEnrollments", "Enrollment")?studentId=' + studentId).done(function (res) {
+                    if (!res.success || !res.data || res.data.length === 0) {
+                        $('#paymentPanel').html('<p class="text-muted mb-0">Bu öğrenciye ait kayıt bulunmuyor.</p>');
+                        return;
+                    }
+                    $('#paymentPanel').html(res.data.map(renderEnrollment).join(''));
+                });
+            }
+
+            // Tek bir kaydı (ders + taksit tablosu) HTML olarak üretir.
+            function renderEnrollment(e) {
+                const rows = e.installments.map(function (i) {
+                    const badge = i.isPaid
+                        ? '<span class="badge bg-success">Ödendi</span>'
+                        : '<span class="badge bg-warning text-dark">Bekliyor</span>';
+                    // Ödenmişse PDF makbuz bağlantısı, ödenmemişse tahsilat butonu gösterilir.
+                    const payBtn = i.isPaid
+                        ? `<a class="btn btn-sm btn-outline-primary" href="@Url.Action("Receipt", "Enrollment")?installmentId=${i.id}" target="_blank"><i class="bi bi-file-earmark-pdf me-1"></i>Makbuz</a>`
+                        : `<button class="btn btn-sm btn-outline-success btn-pay" data-id="${i.id}">Tahsil Et</button>`;
+                    return `<tr>
+                        <td>${i.sequenceNo}</td>
+                        <td>${i.dueDate.slice(0, 10)}</td>
+                        <td class="text-end">${Number(i.amount).toFixed(2)} ₺</td>
+                        <td class="text-center">${badge}</td>
+                        <td class="text-end">${payBtn}</td>
+                    </tr>`;
+                }).join('');
+
+                return `<div class="border rounded p-3 mb-3">
+                    <div class="d-flex justify-content-between">
+                        <div><strong>${e.courseInfo}</strong> <span class="badge bg-secondary">${paymentTypeNames[e.paymentType]}</span></div>
+                        <div class="small">
+                            Toplam: <strong>${Number(e.totalAmount).toFixed(2)} ₺</strong> |
+                            Ödenen: <span class="text-success">${Number(e.paidAmount).toFixed(2)} ₺</span> |
+                            Kalan: <span class="text-danger">${Number(e.remainingAmount).toFixed(2)} ₺</span>
+                        </div>
+                    </div>
+                    <table class="table table-sm mt-2 mb-0">
+                        <thead><tr><th>#</th><th>Vade</th><th class="text-end">Tutar</th><th class="text-center">Durum</th><th></th></tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>`;
+            }
+
+            // Görüntülenen öğrenci değişince paneli güncelle.
+            $('#ViewStudentId').on('change', function () { loadPayments($(this).val()); });
+
+            // Taksit tahsilatı.
+            $('#paymentPanel').on('click', '.btn-pay', async function () {
+                const id = $(this).data('id');
+                if (!await confirmAction('Bu taksit ödendi olarak işaretlenecek.')) return;
+                postForm('@Url.Action("PayInstallment", "Enrollment")', { installmentId: id }).done(function (res) {
+                    showToast(res.success, res.message);
+                    if (res.success) loadPayments($('#ViewStudentId').val());
+                });
+            });
+        });
+    </script>
+}

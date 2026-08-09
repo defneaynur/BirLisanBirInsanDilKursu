@@ -1,0 +1,117 @@
+@{
+    ViewData["Title"] = "Raporlar";
+}
+
+<div class="page-title mb-4">
+    <span class="title-badge"><i class="bi bi-bar-chart-line"></i></span>
+    <div>
+        <div class="h4 mb-0">Raporlar & Doluluk</div>
+        <div class="text-muted small">Ders doluluğu ve dağılım istatistikleri</div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Ders doluluk grafiği -->
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white fw-bold"><i class="bi bi-graph-up-arrow me-2"></i>Ders Doluluk Durumu (Kayıtlı / Kontenjan)</div>
+            <div class="card-body">
+                <div id="occEmpty" class="text-muted d-none">Henüz açılmış ders bulunmuyor.</div>
+                <div style="position:relative; height:320px;">
+                    <canvas id="occupancyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Şube dağılımı -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white fw-bold"><i class="bi bi-building me-2"></i>Şube Başına Ders Sayısı</div>
+            <div class="card-body">
+                <div style="position:relative; height:280px;">
+                    <canvas id="branchChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dil dağılımı -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white fw-bold"><i class="bi bi-translate me-2"></i>Dil Başına Ders Sayısı</div>
+            <div class="card-body">
+                <div style="position:relative; height:280px;">
+                    <canvas id="languageChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Chart.js (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        // Rapor ekranı: veriler AJAX ile alınıp Chart.js grafiklerine dönüştürülür.
+        $(function () {
+            // Marka paletiyle uyumlu renkler.
+            const palette = ['#6366f1', '#8b5cf6', '#14b8a6', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899', '#22c55e'];
+
+            // 1) Ders doluluk grafiği (kayıtlı vs kontenjan — gruplu çubuk).
+            getJson('@Url.Action("CourseOccupancy", "Report")').done(function (data) {
+                if (!data || data.length === 0) {
+                    $('#occEmpty').removeClass('d-none');
+                    $('#occupancyChart').addClass('d-none');
+                    return;
+                }
+                new Chart(document.getElementById('occupancyChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(d => d.courseName),
+                        datasets: [
+                            { label: 'Kayıtlı', data: data.map(d => d.enrolled), backgroundColor: '#6366f1', borderRadius: 6 },
+                            { label: 'Kontenjan', data: data.map(d => d.quota), backgroundColor: '#e2e8f0', borderRadius: 6 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top' },
+                            tooltip: {
+                                callbacks: {
+                                    // İpucunda doluluk yüzdesini de göster.
+                                    afterBody: (items) => 'Doluluk: %' + data[items[0].dataIndex].occupancyPercent
+                                }
+                            }
+                        },
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                    }
+                });
+            });
+
+            // Ortak: dağılım (doughnut) grafiği kuran yardımcı.
+            function buildDoughnut(canvasId, data) {
+                new Chart(document.getElementById(canvasId), {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.map(d => d.name),
+                        datasets: [{ data: data.map(d => d.count), backgroundColor: palette, borderWidth: 2, borderColor: '#fff' }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                });
+            }
+
+            // 2) Şube dağılımı.
+            getJson('@Url.Action("BranchDistribution", "Report")').done(function (data) {
+                if (data && data.length) buildDoughnut('branchChart', data);
+            });
+
+            // 3) Dil dağılımı.
+            getJson('@Url.Action("LanguageDistribution", "Report")').done(function (data) {
+                if (data && data.length) buildDoughnut('languageChart', data);
+            });
+        });
+    </script>
+}
