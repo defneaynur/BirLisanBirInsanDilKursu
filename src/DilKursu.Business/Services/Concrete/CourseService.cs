@@ -60,7 +60,14 @@ public class CourseService(IUnitOfWork uow) : ICourseService
         var suggestion = new CourseSuggestionDto
         {
             AvailableTeachers = await FindAvailableTeachersAsync(criteria),
-            AvailableClassrooms = await FindAvailableClassroomsAsync(criteria)
+            AvailableClassrooms = await FindAvailableClassroomsAsync(criteria),
+
+            // Bağlam sayıları: "hiç yok" ile "o saatte dolu/müsait değil" durumlarını ayırt etmek için.
+            BranchClassroomCount = await uow.Classrooms.Query()
+                .CountAsync(c => c.BranchId == criteria.BranchId),
+            BranchLanguageTeacherCount = await uow.Teachers.Query()
+                .CountAsync(t => t.TeacherLanguages.Any(tl => tl.IsActive && tl.LanguageId == criteria.LanguageId)
+                              && t.TeacherBranches.Any(tb => tb.IsActive && tb.BranchId == criteria.BranchId))
         };
 
         return ServiceResult<CourseSuggestionDto>.Ok(suggestion);

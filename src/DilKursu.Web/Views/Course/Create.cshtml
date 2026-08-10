@@ -129,21 +129,31 @@
 
                     const t = res.data.availableTeachers;
                     const c = res.data.availableClassrooms;
+                    const teacherTotal = res.data.branchLanguageTeacherCount;
+                    const classroomTotal = res.data.branchClassroomCount;
 
                     // Ders açmak için hem uygun öğretmen HEM boş derslik gerekir.
-                    // Biri bile yoksa 2. adım formu gösterilmez; net bir uyarı verilir.
+                    // Biri bile yoksa 2. adım formu gösterilmez; sebebini net söyleyen bir uyarı verilir.
                     if (t.length === 0 || c.length === 0) {
                         $('#suggestionCard').addClass('d-none');
 
-                        let msg;
-                        if (t.length === 0 && c.length === 0) {
-                            msg = 'Bu kriterler için uygun öğretmen ve boş derslik yok. Kriterleri değiştirin.';
-                        } else if (t.length === 0) {
-                            msg = 'Bu kriterler için uygun öğretmen yok. Kriterleri değiştirin.';
-                        } else {
-                            msg = 'Bu kriterler için boş derslik yok. Kriterleri değiştirin.';
+                        const reasons = [];
+
+                        // Öğretmen neden yok? Hiç mi yok, yoksa o saatte müsait değil mi?
+                        if (t.length === 0) {
+                            reasons.push(teacherTotal === 0
+                                ? 'Bu şubede bu dili veren öğretmen tanımlı değil (önce öğretmene bu dil ve şubeyi ekleyin).'
+                                : 'Bu dili veren öğretmen(ler) seçtiğiniz gün/saatte müsait değil (farklı gün/saat deneyin).');
                         }
-                        showToast(false, msg);
+
+                        // Derslik neden yok? Hiç mi yok, yoksa o saatte dolu mu?
+                        if (c.length === 0) {
+                            reasons.push(classroomTotal === 0
+                                ? 'Bu şubede henüz derslik tanımlı değil (Tanımlamalar → Derslikler’den bu şubeye derslik ekleyin).'
+                                : 'Bu şubenin derslikleri seçtiğiniz gün/saatte dolu (farklı gün/saat deneyin).');
+                        }
+
+                        showToast(false, reasons.join(' '));
                         return;
                     }
 

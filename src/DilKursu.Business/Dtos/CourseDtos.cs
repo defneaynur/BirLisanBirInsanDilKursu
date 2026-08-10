@@ -53,6 +53,14 @@ public class CourseSuggestionDto
     public List<TeacherOptionDto> AvailableTeachers { get; set; } = new();
 
     public List<ClassroomOptionDto> AvailableClassrooms { get; set; } = new();
+
+    /// <summary>Seçilen şubede tanımlı toplam derslik sayısı (gün/saatten bağımsız).
+    /// 0 ise şubede hiç derslik yoktur; >0 ama boş derslik yoksa mevcut derslikler o saatte doludur.</summary>
+    public int BranchClassroomCount { get; set; }
+
+    /// <summary>Seçilen dili bilen ve şubede çalışan toplam öğretmen sayısı (gün/saat/çakışmadan bağımsız).
+    /// 0 ise bu şubede o dili veren öğretmen yoktur; >0 ama uygun öğretmen yoksa hepsi o saatte müsait değildir.</summary>
+    public int BranchLanguageTeacherCount { get; set; }
 }
 
 public class TeacherOptionDto
