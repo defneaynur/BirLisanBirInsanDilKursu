@@ -35,4 +35,28 @@ public class ReportController(IReportService reportService) : Controller
         var result = await reportService.GetLanguageCourseDistributionAsync();
         return Json(result.Data);
     }
+
+    /// <summary>Aylık tahsilat (gelir) trendini JSON döndürür (çizgi grafiği için).</summary>
+    [HttpGet]
+    public async Task<IActionResult> MonthlyCollection()
+    {
+        var result = await reportService.GetMonthlyCollectionAsync();
+        return Json(result.Data);
+    }
+
+    /// <summary>Aylık yeni kayıt trendini JSON döndürür (çizgi grafiği için).</summary>
+    [HttpGet]
+    public async Task<IActionResult> MonthlyEnrollments()
+    {
+        var result = await reportService.GetMonthlyEnrollmentsAsync();
+        return Json(result.Data);
+    }
+
+    /// <summary>Haftalık ders yoğunluğunu JSON döndürür (çubuk grafiği için).</summary>
+    [HttpGet]
+    public async Task<IActionResult> WeeklyDensity()
+    {
+        var result = await reportService.GetWeeklyCourseDensityAsync();
+        return Json(result.Data);
+    }
 }

@@ -100,7 +100,7 @@ DilKursu.sln
 
 **Ek Özellikler**
 - **PDF Ödeme Makbuzu** — ödenen taksitler için QuestPDF ile markalı, indirilebilir PDF makbuz
-- **Raporlar & Doluluk** — ders doluluğu (kayıt/kontenjan), şube ve dil bazlı ders dağılımı grafikleri
+- **Raporlar & Grafikler** — ders doluluğu (kayıt/kontenjan), şube ve dil bazlı ders dağılımı, **aylık tahsilat (gelir) trendi**, **aylık yeni kayıt trendi** ve **haftalık ders yoğunluğu** grafikleri (Chart.js)
 - **Kullanıcı (Personel) Yönetimi** — yönetici, kayıt elemanı oluşturur ve şubeye atar
 - **Şube bağlamı** — kullanıcının hangi şubeden giriş yaptığı üst menüde rozetle gösterilir
 - **Derin Loglama & Denetim** — kullanıcı işlemleri `[Modül][Aksiyon]` biçiminde denetim (audit) tablosunda, beklenmeyen hatalar ise yığın izleriyle ayrı bir hata tablosunda; her ikisi de Serilog ile dosyaya da yazılır (ayrıntı için [Loglama ve Denetim](#-loglama-ve-denetim))

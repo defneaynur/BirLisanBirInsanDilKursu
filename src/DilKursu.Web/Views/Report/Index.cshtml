@@ -24,6 +24,42 @@
         </div>
     </div>
 
+    <!-- Aylık tahsilat (gelir) trendi -->
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white fw-bold"><i class="bi bi-cash-stack me-2"></i>Aylık Tahsilat (Son 6 Ay)</div>
+            <div class="card-body">
+                <div style="position:relative; height:300px;">
+                    <canvas id="collectionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aylık yeni kayıt trendi -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white fw-bold"><i class="bi bi-person-plus me-2"></i>Aylık Yeni Kayıt (Son 6 Ay)</div>
+            <div class="card-body">
+                <div style="position:relative; height:280px;">
+                    <canvas id="enrollmentChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Haftalık ders yoğunluğu -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white fw-bold"><i class="bi bi-calendar-week me-2"></i>Haftalık Ders Yoğunluğu</div>
+            <div class="card-body">
+                <div style="position:relative; height:280px;">
+                    <canvas id="densityChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Şube dağılımı -->
     <div class="col-lg-6">
         <div class="card shadow-sm h-100">
@@ -103,12 +139,77 @@
                 });
             }
 
-            // 2) Şube dağılımı.
+            // Türk Lirası biçimlendirme yardımcısı.
+            const tl = v => '₺' + Number(v).toLocaleString('tr-TR');
+
+            // 2) Aylık tahsilat trendi (çizgi — dolgулu alan).
+            getJson('@Url.Action("MonthlyCollection", "Report")').done(function (data) {
+                if (!data || !data.length) return;
+                new Chart(document.getElementById('collectionChart'), {
+                    type: 'line',
+                    data: {
+                        labels: data.map(d => d.name),
+                        datasets: [{
+                            label: 'Tahsil edilen', data: data.map(d => d.amount),
+                            borderColor: '#14b8a6', backgroundColor: 'rgba(20,184,166,.15)',
+                            fill: true, tension: .35, pointRadius: 4, pointBackgroundColor: '#14b8a6'
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { callbacks: { label: c => tl(c.parsed.y) } }
+                        },
+                        scales: { y: { beginAtZero: true, ticks: { callback: v => tl(v) } } }
+                    }
+                });
+            });
+
+            // 3) Aylık yeni kayıt trendi (çizgi).
+            getJson('@Url.Action("MonthlyEnrollments", "Report")').done(function (data) {
+                if (!data || !data.length) return;
+                new Chart(document.getElementById('enrollmentChart'), {
+                    type: 'line',
+                    data: {
+                        labels: data.map(d => d.name),
+                        datasets: [{
+                            label: 'Yeni kayıt', data: data.map(d => d.count),
+                            borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,.15)',
+                            fill: true, tension: .35, pointRadius: 4, pointBackgroundColor: '#6366f1'
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                    }
+                });
+            });
+
+            // 4) Haftalık ders yoğunluğu (çubuk).
+            getJson('@Url.Action("WeeklyDensity", "Report")').done(function (data) {
+                if (!data || !data.length) return;
+                new Chart(document.getElementById('densityChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(d => d.name),
+                        datasets: [{ label: 'Ders sayısı', data: data.map(d => d.count), backgroundColor: '#8b5cf6', borderRadius: 6 }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                    }
+                });
+            });
+
+            // 5) Şube dağılımı.
             getJson('@Url.Action("BranchDistribution", "Report")').done(function (data) {
                 if (data && data.length) buildDoughnut('branchChart', data);
             });
 
-            // 3) Dil dağılımı.
+            // 6) Dil dağılımı.
             getJson('@Url.Action("LanguageDistribution", "Report")').done(function (data) {
                 if (data && data.length) buildDoughnut('languageChart', data);
             });
