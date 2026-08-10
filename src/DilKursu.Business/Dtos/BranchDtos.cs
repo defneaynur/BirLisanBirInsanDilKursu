@@ -31,12 +31,15 @@ public class BranchUpsertDto
     [StringLength(500, ErrorMessage = "Adres en fazla 500 karakter olabilir.")]
     public string Address { get; set; } = string.Empty;
 
-    [StringLength(1000)]
+    [Required(ErrorMessage = "Toplu taşıma talimatları zorunludur.")]
+    [StringLength(1000, ErrorMessage = "Toplu taşıma talimatları en fazla 1000 karakter olabilir.")]
     public string PublicTransportInstructions { get; set; } = string.Empty;
 
-    [StringLength(1000)]
+    [Required(ErrorMessage = "Özel otomobil talimatları zorunludur.")]
+    [StringLength(1000, ErrorMessage = "Özel otomobil talimatları en fazla 1000 karakter olabilir.")]
     public string CarTransportInstructions { get; set; } = string.Empty;
 
-    [StringLength(1000)]
+    [Required(ErrorMessage = "Sosyal olanaklar zorunludur.")]
+    [StringLength(1000, ErrorMessage = "Sosyal olanaklar en fazla 1000 karakter olabilir.")]
     public string SocialFacilities { get; set; } = string.Empty;
 }

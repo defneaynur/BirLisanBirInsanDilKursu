@@ -94,7 +94,7 @@ public class TeacherService(IUnitOfWork uow) : ITeacherService
         var teacher = new Teacher
         {
             FullName = dto.FullName,
-            HomePhone = dto.HomePhone,
+            HomePhone = dto.HomePhone ?? string.Empty,
             MobilePhone = dto.MobilePhone,
             StartDate = dto.StartDate
         };
@@ -134,7 +134,7 @@ public class TeacherService(IUnitOfWork uow) : ITeacherService
         }
 
         teacher.FullName = dto.FullName;
-        teacher.HomePhone = dto.HomePhone;
+        teacher.HomePhone = dto.HomePhone ?? string.Empty;
         teacher.MobilePhone = dto.MobilePhone;
         teacher.StartDate = dto.StartDate;
 

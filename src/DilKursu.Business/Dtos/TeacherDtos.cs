@@ -36,9 +36,11 @@ public class TeacherUpsertDto
     [StringLength(150)]
     public string FullName { get; set; } = string.Empty;
 
+    // Ev telefonu opsiyoneldir (nullable ki örtük "zorunlu" doğrulaması oluşmasın).
     [StringLength(20)]
-    public string HomePhone { get; set; } = string.Empty;
+    public string? HomePhone { get; set; }
 
+    [Required(ErrorMessage = "Cep telefonu zorunludur.")]
     [StringLength(20)]
     public string MobilePhone { get; set; } = string.Empty;
 

@@ -65,7 +65,7 @@ public class StudentService(IUnitOfWork uow) : IStudentService
         var student = new Student
         {
             FullName = dto.FullName,
-            HomePhone = dto.HomePhone,
+            HomePhone = dto.HomePhone ?? string.Empty,
             MobilePhone = dto.MobilePhone
         };
 
@@ -89,7 +89,7 @@ public class StudentService(IUnitOfWork uow) : IStudentService
         }
 
         student.FullName = dto.FullName;
-        student.HomePhone = dto.HomePhone;
+        student.HomePhone = dto.HomePhone ?? string.Empty;
         student.MobilePhone = dto.MobilePhone;
 
         uow.Students.Update(student);
